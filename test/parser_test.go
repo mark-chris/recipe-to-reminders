@@ -1,10 +1,16 @@
 package test
 
 import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"recipe-to-reminders/internal/handler"
+	"recipe-to-reminders/internal/models"
 	"recipe-to-reminders/internal/parser"
 )
 
@@ -124,5 +130,89 @@ func TestExtractor_NoRecipeReturnsError(t *testing.T) {
 	_, err := e.ParseHTML(html, "https://example.com/about")
 	if err == nil {
 		t.Fatal("expected error for page with no recipe")
+	}
+}
+
+func TestExtractHandler_ValidURL(t *testing.T) {
+	// Set up a test recipe server
+	recipeServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write(loadFixture(t, "jsonld_simple.html"))
+	}))
+	defer recipeServer.Close()
+
+	h := handler.New(parser.NewFetcher(parser.WithAllowLoopback(true)))
+
+	body, _ := json.Marshal(models.ExtractRequest{URL: recipeServer.URL})
+	req := httptest.NewRequest(http.MethodPost, "/extract", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+
+	h.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200. body: %s", rr.Code, rr.Body.String())
+	}
+
+	var resp models.ExtractResponse
+	if err := json.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+	if resp.Title != "Classic Beef Stew" {
+		t.Errorf("title = %q, want %q", resp.Title, "Classic Beef Stew")
+	}
+	if len(resp.Ingredients) == 0 {
+		t.Fatal("expected ingredients")
+	}
+	if resp.Method != "jsonld" {
+		t.Errorf("method = %q, want %q", resp.Method, "jsonld")
+	}
+}
+
+func TestExtractHandler_MissingURL(t *testing.T) {
+	h := handler.New(nil)
+
+	body, _ := json.Marshal(models.ExtractRequest{})
+	req := httptest.NewRequest(http.MethodPost, "/extract", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+
+	h.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400", rr.Code)
+	}
+}
+
+func TestExtractHandler_ImageBase64Unsupported(t *testing.T) {
+	h := handler.New(nil)
+
+	body, _ := json.Marshal(models.ExtractRequest{ImageBase64: "abc123"})
+	req := httptest.NewRequest(http.MethodPost, "/extract", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+
+	h.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400", rr.Code)
+	}
+
+	var errResp models.ErrorResponse
+	json.Unmarshal(rr.Body.Bytes(), &errResp)
+	if errResp.Error != "image_not_supported" {
+		t.Errorf("error = %q, want %q", errResp.Error, "image_not_supported")
+	}
+}
+
+func TestExtractHandler_WrongMethod(t *testing.T) {
+	h := handler.New(nil)
+	req := httptest.NewRequest(http.MethodGet, "/extract", nil)
+	rr := httptest.NewRecorder()
+
+	h.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("status = %d, want 405", rr.Code)
 	}
 }
