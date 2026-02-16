@@ -43,16 +43,16 @@ func (p JSONLDParser) Parse(html []byte, sourceURL string) (*models.RawRecipe, e
 
 func extractRecipeFromJSON(data []byte) *models.RawRecipe {
 	// Try as a single object first
-	var obj map[string]interface{}
+	var obj map[string]any
 	if err := json.Unmarshal(data, &obj); err == nil {
 		if r := tryExtractRecipe(obj); r != nil {
 			return r
 		}
 		// Check for @graph array
 		if graph, ok := obj["@graph"]; ok {
-			if items, ok := graph.([]interface{}); ok {
+			if items, ok := graph.([]any); ok {
 				for _, item := range items {
-					if m, ok := item.(map[string]interface{}); ok {
+					if m, ok := item.(map[string]any); ok {
 						if r := tryExtractRecipe(m); r != nil {
 							return r
 						}
@@ -63,7 +63,7 @@ func extractRecipeFromJSON(data []byte) *models.RawRecipe {
 	}
 
 	// Try as an array of objects
-	var arr []map[string]interface{}
+	var arr []map[string]any
 	if err := json.Unmarshal(data, &arr); err == nil {
 		for _, obj := range arr {
 			if r := tryExtractRecipe(obj); r != nil {
@@ -75,11 +75,11 @@ func extractRecipeFromJSON(data []byte) *models.RawRecipe {
 	return nil
 }
 
-func tryExtractRecipe(obj map[string]interface{}) *models.RawRecipe {
+func tryExtractRecipe(obj map[string]any) *models.RawRecipe {
 	typ, _ := obj["@type"].(string)
 	if !strings.EqualFold(typ, "Recipe") {
 		// @type can also be an array: ["Recipe"]
-		if types, ok := obj["@type"].([]interface{}); ok {
+		if types, ok := obj["@type"].([]any); ok {
 			found := false
 			for _, t := range types {
 				if s, ok := t.(string); ok && strings.EqualFold(s, "Recipe") {
@@ -116,9 +116,9 @@ func tryExtractRecipe(obj map[string]interface{}) *models.RawRecipe {
 	}
 }
 
-func extractStringArray(v interface{}) []string {
+func extractStringArray(v any) []string {
 	switch val := v.(type) {
-	case []interface{}:
+	case []any:
 		var result []string
 		for _, item := range val {
 			if s, ok := item.(string); ok {
