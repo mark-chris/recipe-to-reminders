@@ -141,7 +141,7 @@ func (f *Fetcher) Fetch(ctx context.Context, rawURL string) ([]byte, error) {
 			if len(via) >= maxRedirects {
 				return fmt.Errorf("too many redirects")
 			}
-			// Re-validate each redirect target
+			// Re-validate redirect target scheme and host (IP check happens in DialContext)
 			_, err := ValidateURL(req.URL.String())
 			return err
 		},
@@ -164,8 +164,15 @@ func (f *Fetcher) Fetch(ctx context.Context, rawURL string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to fetch recipe from URL")
 	}
 
-	body, err := io.ReadAll(io.LimitReader(resp.Body, f.maxBodySize))
+	if resp.ContentLength > f.maxBodySize {
+		return nil, fmt.Errorf("failed to fetch recipe from URL")
+	}
+
+	body, err := io.ReadAll(io.LimitReader(resp.Body, f.maxBodySize+1))
 	if err != nil {
+		return nil, fmt.Errorf("failed to fetch recipe from URL")
+	}
+	if int64(len(body)) > f.maxBodySize {
 		return nil, fmt.Errorf("failed to fetch recipe from URL")
 	}
 	return body, nil

@@ -87,8 +87,8 @@ func TestIsBlockedIP(t *testing.T) {
 	}
 }
 
-func TestFetcher_LimitsResponseSize(t *testing.T) {
-	// Server returns 10MB of data
+func TestFetcher_RejectsOversizedResponse(t *testing.T) {
+	// Server returns 10MB of data (well over 1024-byte limit)
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		for i := 0; i < 10*1024; i++ {
@@ -101,12 +101,9 @@ func TestFetcher_LimitsResponseSize(t *testing.T) {
 	defer ts.Close()
 
 	f := parser.NewFetcher(parser.WithMaxBodySize(1024), parser.WithAllowLoopback(true))
-	body, err := f.Fetch(context.Background(), ts.URL)
-	if err != nil {
-		t.Fatalf("fetch failed: %v", err)
-	}
-	if len(body) > 1024 {
-		t.Errorf("body size %d exceeds limit 1024", len(body))
+	_, err := f.Fetch(context.Background(), ts.URL)
+	if err == nil {
+		t.Fatal("expected error for oversized response")
 	}
 }
 
