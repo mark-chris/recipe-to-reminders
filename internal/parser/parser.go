@@ -25,13 +25,8 @@ func NewExtractor(fetcher *Fetcher) *Extractor {
 	return &Extractor{
 		fetcher:      fetcher,
 		jsonld:       JSONLDParser{},
-		htmlFallback: nil, // set after HTML fallback is implemented
+		htmlFallback: HTMLFallbackParser{},
 	}
-}
-
-// SetHTMLFallback sets the HTML fallback parser. Called after it's implemented.
-func (e *Extractor) SetHTMLFallback(p HTMLParser) {
-	e.htmlFallback = p
 }
 
 // Extract fetches a URL and extracts recipe ingredients.

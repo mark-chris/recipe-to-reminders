@@ -120,7 +120,49 @@ func TestExtractor_JSONLDPath(t *testing.T) {
 }
 
 func TestExtractor_FallsBackToHTML(t *testing.T) {
-	t.Skip("HTML fallback not yet implemented")
+	html := loadFixture(t, "html_only.html")
+
+	e := parser.NewExtractor(nil)
+	result, err := e.ParseHTML(html, "https://example.com/pasta")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Method != "html" {
+		t.Errorf("method = %q, want %q", result.Method, "html")
+	}
+	if len(result.Ingredients) == 0 {
+		t.Fatal("expected ingredients from HTML fallback")
+	}
+}
+
+func TestHTMLFallbackParser_FindsIngredientList(t *testing.T) {
+	html := loadFixture(t, "html_only.html")
+	p := parser.HTMLFallbackParser{}
+	result, err := p.Parse(html, "https://example.com/pasta")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Title == "" {
+		t.Error("expected a title")
+	}
+	if len(result.Ingredients) < 4 {
+		t.Fatalf("got %d ingredients, want at least 4", len(result.Ingredients))
+	}
+	if result.Method != "html" {
+		t.Errorf("method = %q, want %q", result.Method, "html")
+	}
+	if result.Confidence < 0.7 || result.Confidence > 1.0 {
+		t.Errorf("confidence = %f, want 0.7-1.0", result.Confidence)
+	}
+}
+
+func TestHTMLFallbackParser_NoRecipe(t *testing.T) {
+	html := loadFixture(t, "no_recipe.html")
+	p := parser.HTMLFallbackParser{}
+	_, err := p.Parse(html, "https://example.com/about")
+	if err == nil {
+		t.Fatal("expected error for page with no recipe")
+	}
 }
 
 func TestExtractor_NoRecipeReturnsError(t *testing.T) {
