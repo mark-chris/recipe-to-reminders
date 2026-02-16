@@ -109,6 +109,34 @@ func TestParseRawIngredient_EdgeCases(t *testing.T) {
 	}
 }
 
+func TestCategorize(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantCat string
+	}{
+		{"carrots", "produce"},
+		{"beef chuck", "meat"},
+		{"butter", "dairy"},
+		{"all-purpose flour", "pantry"},
+		{"black pepper", "spices"},
+		{"frozen peas", "frozen"},
+		{"something unknown", "other"},
+		{"chicken breast", "meat"},
+		{"milk", "dairy"},
+		{"olive oil", "pantry"},
+		{"basil", "spices"},
+		{"garlic", "produce"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ingredients.Categorize(tt.name)
+			if got != tt.wantCat {
+				t.Errorf("Categorize(%q) = %q, want %q", tt.name, got, tt.wantCat)
+			}
+		})
+	}
+}
+
 func TestNormalizeUnit(t *testing.T) {
 	tests := []struct {
 		input string
