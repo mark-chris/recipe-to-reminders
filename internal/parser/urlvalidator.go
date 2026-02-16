@@ -154,7 +154,7 @@ func (f *Fetcher) Fetch(ctx context.Context, rawURL string) ([]byte, error) {
 	req.Header.Set("User-Agent", "RecipeToReminders/1.0")
 	req.Header.Set("Accept", "text/html,application/xhtml+xml")
 
-	resp, err := client.Do(req)
+	resp, err := client.Do(req) // #nosec G704 -- URL is validated, DNS resolved, IPs checked against blocklist
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch recipe from URL")
 	}

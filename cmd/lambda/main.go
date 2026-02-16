@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"recipe-to-reminders/internal/handler"
 	"recipe-to-reminders/internal/parser"
@@ -18,8 +19,17 @@ func main() {
 		addr = ":" + port
 	}
 
-	log.Printf("Listening on %s", addr)
-	if err := http.ListenAndServe(addr, h); err != nil {
+	srv := &http.Server{
+		Addr:              addr,
+		Handler:           h,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      60 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
+
+	log.Printf("Listening on %s", addr) // #nosec G706 -- addr is from PORT env var, not user input
+	if err := srv.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
 }

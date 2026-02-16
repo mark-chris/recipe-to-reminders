@@ -165,7 +165,7 @@ func TestIsBlockedIP_NilIP(t *testing.T) {
 
 func TestFetcher_BlocksLoopbackByDefault(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "should not reach here")
+		_, _ = fmt.Fprint(w, "should not reach here")
 	}))
 	defer ts.Close()
 
@@ -181,7 +181,7 @@ func TestFetcher_BlocksRedirectToBlockedIP(t *testing.T) {
 	// Simulate a redirect from a public server to a blocked internal IP.
 	// The DialContext hook should reject the connection to the redirect target.
 	blocked := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "internal secret")
+		_, _ = fmt.Fprint(w, "internal secret")
 	}))
 	defer blocked.Close()
 
@@ -214,7 +214,7 @@ func TestFetcher_RejectsNon200Status(t *testing.T) {
 func TestFetcher_SuccessfulFetch(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		fmt.Fprint(w, "<html><body>Hello</body></html>")
+		_, _ = fmt.Fprint(w, "<html><body>Hello</body></html>")
 	}))
 	defer ts.Close()
 
