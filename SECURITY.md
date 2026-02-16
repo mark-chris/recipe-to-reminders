@@ -16,5 +16,5 @@ Only the latest version on `main` is supported with security updates.
 - **Input validation** with strict size and format limits on all API inputs
 - **Dependency scanning** via Dependabot alerts and automated security updates
 - **Static analysis** via gosec (SARIF), CodeQL (weekly), and govulncheck in CI
-- **Secret scanning** via pre-commit gitleaks hook
+- **Secret scanning** via GitHub secret scanning with push protection
 - **No secrets in code** — all credentials via environment variables
