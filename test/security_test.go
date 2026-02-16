@@ -180,6 +180,27 @@ func TestFetcher_BlocksLoopbackByDefault(t *testing.T) {
 	}
 }
 
+func TestFetcher_BlocksRedirectToBlockedIP(t *testing.T) {
+	// Simulate a redirect from a public server to a blocked internal IP.
+	// The DialContext hook should reject the connection to the redirect target.
+	blocked := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "internal secret")
+	}))
+	defer blocked.Close()
+
+	redirector := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, blocked.URL, http.StatusFound)
+	}))
+	defer redirector.Close()
+
+	// Default fetcher (no allowLoopback) should block the redirect target
+	f := parser.NewFetcher()
+	_, err := f.Fetch(context.Background(), redirector.URL)
+	if err == nil {
+		t.Fatal("expected redirect to loopback to be blocked")
+	}
+}
+
 func TestFetcher_RejectsNon200Status(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
