@@ -1,2 +1,22 @@
+# Build output
 /lambda
+/bootstrap
+
+# Test artifacts
 coverage.out
+*.test
+
+# Secrets — never commit these
+.env
+.env.*
+*.pem
+*.key
+credentials.json
+terraform.tfvars
+terraform.tfstate
+terraform.tfstate.backup
+.terraform/
+
+# OS
+.DS_Store
+Thumbs.db

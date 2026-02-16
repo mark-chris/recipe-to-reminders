@@ -46,7 +46,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: securego/gosec@master
+      - uses: securego/gosec@v2
         with:
           args: -fmt sarif -out gosec-results.sarif ./...
 
@@ -70,3 +70,14 @@ jobs:
 
       - name: Run govulncheck
         run: govulncheck ./...
+
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
