@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"recipe-to-reminders/internal/ingredients"
+	"recipe-to-reminders/internal/models"
 )
 
 func TestParseRawIngredient_Standard(t *testing.T) {
@@ -162,5 +163,52 @@ func TestNormalizeUnit(t *testing.T) {
 				t.Errorf("NormalizeUnit(%q) = %q, want %q", tt.input, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestDeduplicate_MergesSameNameSameUnit(t *testing.T) {
+	input := []models.Ingredient{
+		{Name: "flour", Quantity: "1", Unit: "cups", Category: "pantry", Raw: "1 cup flour"},
+		{Name: "flour", Quantity: "2", Unit: "tbsp", Category: "pantry", Raw: "2 tbsp flour for dusting"},
+	}
+	result := ingredients.Deduplicate(input)
+	// Different units — should NOT merge, kept as separate items
+	if len(result) != 2 {
+		t.Fatalf("got %d ingredients, want 2 (incompatible units)", len(result))
+	}
+}
+
+func TestDeduplicate_MergesCompatibleUnits(t *testing.T) {
+	input := []models.Ingredient{
+		{Name: "olive oil", Quantity: "2", Unit: "tbsp", Category: "pantry", Raw: "2 tbsp olive oil"},
+		{Name: "olive oil", Quantity: "1", Unit: "tbsp", Category: "pantry", Raw: "1 tbsp olive oil"},
+	}
+	result := ingredients.Deduplicate(input)
+	if len(result) != 1 {
+		t.Fatalf("got %d ingredients, want 1", len(result))
+	}
+	if result[0].Quantity != "3" {
+		t.Errorf("quantity = %q, want %q", result[0].Quantity, "3")
+	}
+}
+
+func TestDeduplicate_PreservesDistinctItems(t *testing.T) {
+	input := []models.Ingredient{
+		{Name: "flour", Quantity: "2", Unit: "cups", Category: "pantry", Raw: "2 cups flour"},
+		{Name: "sugar", Quantity: "1", Unit: "cups", Category: "pantry", Raw: "1 cup sugar"},
+	}
+	result := ingredients.Deduplicate(input)
+	if len(result) != 2 {
+		t.Fatalf("got %d ingredients, want 2", len(result))
+	}
+}
+
+func TestDeduplicate_NoQuantity(t *testing.T) {
+	input := []models.Ingredient{
+		{Name: "salt and pepper", Raw: "Salt and pepper to taste"},
+	}
+	result := ingredients.Deduplicate(input)
+	if len(result) != 1 {
+		t.Fatalf("got %d, want 1", len(result))
 	}
 }
