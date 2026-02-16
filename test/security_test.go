@@ -92,9 +92,9 @@ func TestFetcher_RejectsOversizedResponse(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		for i := 0; i < 10*1024; i++ {
-			fmt.Fprint(w, "x")
+			_, _ = fmt.Fprint(w, "x")
 			for j := 0; j < 1024; j++ {
-				fmt.Fprint(w, "x")
+				_, _ = fmt.Fprint(w, "x")
 			}
 		}
 	}))
@@ -115,7 +115,7 @@ func TestFetcher_RespectsRedirectLimit(t *testing.T) {
 			http.Redirect(w, r, fmt.Sprintf("/?attempt=%d", redirectCount), http.StatusFound)
 			return
 		}
-		fmt.Fprint(w, "final")
+		_, _ = fmt.Fprint(w, "final")
 	}))
 	defer ts.Close()
 

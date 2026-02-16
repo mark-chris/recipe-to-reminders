@@ -179,7 +179,7 @@ func TestExtractHandler_ValidURL(t *testing.T) {
 	// Set up a test recipe server
 	recipeServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write(loadFixture(t, "jsonld_simple.html"))
+		_, _ = w.Write(loadFixture(t, "jsonld_simple.html"))
 	}))
 	defer recipeServer.Close()
 
@@ -241,7 +241,7 @@ func TestExtractHandler_ImageBase64Unsupported(t *testing.T) {
 	}
 
 	var errResp models.ErrorResponse
-	json.Unmarshal(rr.Body.Bytes(), &errResp)
+	_ = json.Unmarshal(rr.Body.Bytes(), &errResp)
 	if errResp.Error != "image_not_supported" {
 		t.Errorf("error = %q, want %q", errResp.Error, "image_not_supported")
 	}
