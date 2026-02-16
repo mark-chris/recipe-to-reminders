@@ -82,3 +82,47 @@ func TestJSONLDParser_ExtractsSource(t *testing.T) {
 		t.Errorf("source = %q, want %q", result.Source, "www.allrecipes.com")
 	}
 }
+
+func TestExtractor_JSONLDPath(t *testing.T) {
+	html := loadFixture(t, "jsonld_simple.html")
+
+	e := parser.NewExtractor(nil) // nil fetcher — we'll call ParseHTML separately
+	result, err := e.ParseHTML(html, "https://example.com/recipe")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Method != "jsonld" {
+		t.Errorf("method = %q, want %q", result.Method, "jsonld")
+	}
+	if result.Title != "Classic Beef Stew" {
+		t.Errorf("title = %q, want %q", result.Title, "Classic Beef Stew")
+	}
+	if len(result.Ingredients) != 6 {
+		t.Fatalf("got %d ingredients, want 6", len(result.Ingredients))
+	}
+	// Check that ingredients are normalized
+	first := result.Ingredients[0]
+	if first.Name != "beef chuck" {
+		t.Errorf("first ingredient name = %q, want %q", first.Name, "beef chuck")
+	}
+	if first.Quantity != "2" {
+		t.Errorf("first ingredient qty = %q, want %q", first.Quantity, "2")
+	}
+	if first.Category == "" {
+		t.Error("first ingredient should have a category")
+	}
+}
+
+func TestExtractor_FallsBackToHTML(t *testing.T) {
+	t.Skip("HTML fallback not yet implemented")
+}
+
+func TestExtractor_NoRecipeReturnsError(t *testing.T) {
+	html := loadFixture(t, "no_recipe.html")
+
+	e := parser.NewExtractor(nil)
+	_, err := e.ParseHTML(html, "https://example.com/about")
+	if err == nil {
+		t.Fatal("expected error for page with no recipe")
+	}
+}
