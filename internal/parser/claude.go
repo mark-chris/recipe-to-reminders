@@ -84,7 +84,7 @@ func (c *ClaudeExtractor) Extract(ctx context.Context, image []byte) (*ClaudeRes
 	mediaType := detectMediaType(image)
 
 	msg, err := c.client.Messages.New(ctx, anthropic.MessageNewParams{
-		Model:     anthropic.ModelClaude3_5HaikuLatest,
+		Model:     anthropic.ModelClaudeHaiku4_5_20251001,
 		MaxTokens: claudeMaxTokens,
 		System: []anthropic.TextBlockParam{
 			{Text: claudeSystemPrompt},

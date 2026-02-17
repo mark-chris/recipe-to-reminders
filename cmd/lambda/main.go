@@ -34,7 +34,7 @@ func main() {
 	if thresh := os.Getenv("CONFIDENCE_THRESHOLD"); thresh != "" {
 		v, err := strconv.ParseFloat(thresh, 64)
 		if err != nil || v < 0 || v > 1 {
-			log.Fatalf("invalid CONFIDENCE_THRESHOLD %q: must be 0.0-1.0", thresh)
+			log.Fatalf("invalid CONFIDENCE_THRESHOLD %q: must be 0.0-1.0", thresh) // #nosec G706 -- %q quotes the value
 		}
 		opts = append(opts, parser.WithConfidenceThreshold(v))
 	}
@@ -45,7 +45,7 @@ func main() {
 		if v := os.Getenv("CLAUDE_FALLBACK_MAX_PER_MIN"); v != "" {
 			n, err := strconv.Atoi(v)
 			if err != nil || n < 1 {
-				log.Fatalf("invalid CLAUDE_FALLBACK_MAX_PER_MIN %q", v)
+				log.Fatalf("invalid CLAUDE_FALLBACK_MAX_PER_MIN %q", v) // #nosec G706 -- %q quotes the value
 			}
 			maxPerMin = n
 		}

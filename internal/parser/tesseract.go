@@ -56,7 +56,7 @@ func (t *TesseractEngine) Run(ctx context.Context, image []byte) (string, float6
 	defer cancel()
 
 	// Run Tesseract: read from stdin, write text to stdout
-	cmd := exec.CommandContext(ctx, "tesseract", "stdin", "stdout",
+	cmd := exec.CommandContext(ctx, "tesseract", "stdin", "stdout", // #nosec G204 -- psm/lang validated in NewTesseractEngine
 		"-l", t.lang, "--psm", t.psm)
 	cmd.Stdin = bytes.NewReader(image)
 
@@ -78,7 +78,7 @@ func (t *TesseractEngine) Run(ctx context.Context, image []byte) (string, float6
 
 // getConfidence runs Tesseract with TSV output to extract average character confidence.
 func (t *TesseractEngine) getConfidence(ctx context.Context, image []byte) float64 {
-	cmd := exec.CommandContext(ctx, "tesseract", "stdin", "stdout",
+	cmd := exec.CommandContext(ctx, "tesseract", "stdin", "stdout", // #nosec G204 -- psm/lang validated in NewTesseractEngine
 		"-l", t.lang, "--psm", t.psm, "tsv")
 	cmd.Stdin = bytes.NewReader(image)
 
