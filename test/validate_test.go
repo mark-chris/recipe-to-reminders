@@ -25,7 +25,7 @@ func TestGenerateRecipeID(t *testing.T) {
 func TestGenerateRecipeID_SpecialChars(t *testing.T) {
 	id := handler.GenerateRecipeID("Mom's Best Mac & Cheese!!!")
 	for _, c := range id {
-		if !((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-') {
+		if (c < 'a' || c > 'z') && (c < '0' || c > '9') && c != '-' {
 			t.Errorf("invalid char %q in ID %q", string(c), id)
 		}
 	}

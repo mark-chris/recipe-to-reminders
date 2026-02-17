@@ -35,7 +35,7 @@ func (s *S3Store) ReadAll(ctx context.Context) (*models.RecipeCollection, string
 		}
 		return nil, "", fmt.Errorf("s3 get: %w", err)
 	}
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 
 	data, err := io.ReadAll(body)
 	if err != nil {
@@ -87,7 +87,7 @@ func (s *S3Store) recoverFromVersion(ctx context.Context) (*models.RecipeCollect
 		if err != nil {
 			continue
 		}
-		defer body.Close()
+		defer func() { _ = body.Close() }()
 
 		data, err := io.ReadAll(body)
 		if err != nil {
