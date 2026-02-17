@@ -2,6 +2,7 @@ package test
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -226,7 +227,7 @@ func TestExtractHandler_MissingURL(t *testing.T) {
 	}
 }
 
-func TestExtractHandler_ImageBase64Unsupported(t *testing.T) {
+func TestExtractHandler_InvalidImageBase64(t *testing.T) {
 	h := handler.New(nil)
 
 	body, _ := json.Marshal(models.ExtractRequest{ImageBase64: "abc123"})
@@ -242,8 +243,8 @@ func TestExtractHandler_ImageBase64Unsupported(t *testing.T) {
 
 	var errResp models.ErrorResponse
 	_ = json.Unmarshal(rr.Body.Bytes(), &errResp)
-	if errResp.Error != "image_not_supported" {
-		t.Errorf("error = %q, want %q", errResp.Error, "image_not_supported")
+	if errResp.Error != "invalid_image" {
+		t.Errorf("error = %q, want %q", errResp.Error, "invalid_image")
 	}
 }
 
@@ -256,5 +257,71 @@ func TestExtractHandler_WrongMethod(t *testing.T) {
 
 	if rr.Code != http.StatusMethodNotAllowed {
 		t.Fatalf("status = %d, want 405", rr.Code)
+	}
+}
+
+func TestExtractHandler_ImageBase64(t *testing.T) {
+	mock := &MockOCREngine{
+		Text:       "2 cups flour\n1 tsp salt\n1 cup sugar\n3 large eggs\n1 cup milk\n",
+		Confidence: 0.90,
+	}
+	h := handler.New(nil,
+		parser.WithOCREngine(mock),
+		parser.WithConfidenceThreshold(0.5),
+	)
+
+	img := createTestPNG(t, 100, 100)
+	b64 := base64.StdEncoding.EncodeToString(img)
+	body, _ := json.Marshal(models.ExtractRequest{ImageBase64: b64})
+	req := httptest.NewRequest(http.MethodPost, "/extract", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+
+	h.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200. body: %s", rr.Code, rr.Body.String())
+	}
+
+	var resp models.ExtractResponse
+	if err := json.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+	if resp.Method != "tesseract" {
+		t.Errorf("method = %q, want tesseract", resp.Method)
+	}
+	if len(resp.Ingredients) == 0 {
+		t.Fatal("expected ingredients")
+	}
+}
+
+func TestExtractHandler_ImageTooLarge(t *testing.T) {
+	h := handler.New(nil)
+
+	large := base64.StdEncoding.EncodeToString(make([]byte, 8*1024*1024))
+	body, _ := json.Marshal(models.ExtractRequest{ImageBase64: large})
+	req := httptest.NewRequest(http.MethodPost, "/extract", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+
+	h.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400", rr.Code)
+	}
+}
+
+func TestExtractHandler_BothURLAndImage(t *testing.T) {
+	h := handler.New(nil)
+
+	body, _ := json.Marshal(models.ExtractRequest{URL: "https://example.com", ImageBase64: "abc"})
+	req := httptest.NewRequest(http.MethodPost, "/extract", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+
+	h.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400", rr.Code)
 	}
 }

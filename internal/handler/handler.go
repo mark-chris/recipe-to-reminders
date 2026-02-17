@@ -15,10 +15,10 @@ type Handler struct {
 }
 
 // New creates a Handler wired to a Fetcher for URL extraction.
-func New(fetcher *parser.Fetcher) *Handler {
+func New(fetcher *parser.Fetcher, opts ...parser.ExtractorOption) *Handler {
 	h := &Handler{
 		mux:       http.NewServeMux(),
-		extractor: parser.NewExtractor(fetcher),
+		extractor: parser.NewExtractor(fetcher, opts...),
 	}
 	h.mux.HandleFunc("POST /extract", h.handleExtract)
 	// Return 405 for non-POST on /extract
