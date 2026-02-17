@@ -79,7 +79,7 @@ func (c *S3Client) ListObjectVersions(ctx context.Context, bucket, key string, m
 	out, err := c.client.ListObjectVersions(ctx, &s3.ListObjectVersionsInput{
 		Bucket:  aws.String(bucket),
 		Prefix:  aws.String(key),
-		MaxKeys: aws.Int32(int32(maxKeys)),
+		MaxKeys: aws.Int32(int32(maxKeys)), // #nosec G115 -- maxKeys is bounded internally (max 5)
 	})
 	if err != nil {
 		return nil, err

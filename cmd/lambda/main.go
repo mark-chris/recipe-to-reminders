@@ -73,7 +73,7 @@ func main() {
 		s3Client := storage.NewS3Client(s3.NewFromConfig(cfg))
 		store := storage.NewS3Store(s3Client, bucket, recipesKey)
 		handlerOpts = append(handlerOpts, handler.WithStore(store))
-		log.Printf("Recipe storage: s3://%s/%s", bucket, recipesKey)
+		log.Printf("Recipe storage: s3://%s/%s", bucket, recipesKey) // #nosec G706 -- bucket/key from env vars, not user input
 	}
 
 	h := handler.New(fetcher, handlerOpts, opts...)
