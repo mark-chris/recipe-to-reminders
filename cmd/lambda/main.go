@@ -1,14 +1,19 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+
 	"recipe-to-reminders/internal/handler"
 	"recipe-to-reminders/internal/parser"
+	"recipe-to-reminders/internal/storage"
 )
 
 func main() {
@@ -53,7 +58,25 @@ func main() {
 		opts = append(opts, parser.WithImageExtractor(claude))
 	}
 
-	h := handler.New(fetcher, nil, opts...)
+	// S3 recipe storage
+	var handlerOpts []handler.HandlerOption
+	if bucket := os.Getenv("S3_BUCKET"); bucket != "" {
+		recipesKey := os.Getenv("S3_RECIPES_KEY")
+		if recipesKey == "" {
+			recipesKey = "recipes.json"
+		}
+
+		cfg, err := config.LoadDefaultConfig(context.Background())
+		if err != nil {
+			log.Fatalf("failed to load AWS config: %v", err)
+		}
+		s3Client := storage.NewS3Client(s3.NewFromConfig(cfg))
+		store := storage.NewS3Store(s3Client, bucket, recipesKey)
+		handlerOpts = append(handlerOpts, handler.WithStore(store))
+		log.Printf("Recipe storage: s3://%s/%s", bucket, recipesKey)
+	}
+
+	h := handler.New(fetcher, handlerOpts, opts...)
 
 	addr := ":8080"
 	if port := os.Getenv("PORT"); port != "" {
