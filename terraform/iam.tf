@@ -46,6 +46,12 @@ resource "aws_iam_role_policy" "lambda_s3" {
   })
 }
 
+# CloudWatch log group with retention policy
+resource "aws_cloudwatch_log_group" "lambda" {
+  name              = "/aws/lambda/${var.project_name}"
+  retention_in_days = 30
+}
+
 # CloudWatch Logs — scoped to this function's log group
 resource "aws_iam_role_policy" "lambda_logs" {
   name = "cloudwatch-logs"
@@ -61,7 +67,7 @@ resource "aws_iam_role_policy" "lambda_logs" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]
-        Resource = "arn:aws:logs:${var.aws_region}:*:log-group:/aws/lambda/${var.project_name}:*"
+        Resource = "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${var.project_name}:*"
       }
     ]
   })

@@ -23,16 +23,15 @@ resource "aws_lambda_function" "api" {
   reserved_concurrent_executions = var.lambda_reserved_concurrency
 
   layers = [
-    "arn:aws:lambda:${var.aws_region}:753240598075:layer:LambdaAdapterLayerArm64:25",
+    "arn:aws:lambda:${var.aws_region}:753240598075:layer:LambdaAdapterLayerArm64:${var.lambda_web_adapter_version}",
     aws_lambda_layer_version.tesseract.arn
   ]
 
   environment {
     variables = {
-      # Lambda Web Adapter
+      # Lambda Web Adapter (port check for readiness, no path needed)
       PORT                        = "8080"
       AWS_LAMBDA_EXEC_WRAPPER     = "/opt/bootstrap"
-      READINESS_CHECK_PATH        = "/extract"
       # S3 storage
       S3_BUCKET                   = aws_s3_bucket.recipes.id
       S3_RECIPES_KEY              = "recipes.json"
@@ -43,7 +42,9 @@ resource "aws_lambda_function" "api" {
       # Photo extraction
       PHOTO_STRATEGY              = "tesseract-first"
       CONFIDENCE_THRESHOLD        = "0.65"
-      # Claude Vision fallback (optional)
+      # Claude Vision fallback (optional).
+      # Note: stored as plaintext env var — acceptable for personal use.
+      # For multi-user, migrate to AWS Secrets Manager.
       ANTHROPIC_API_KEY           = var.anthropic_api_key
       CLAUDE_FALLBACK_MAX_PER_MIN = "10"
     }

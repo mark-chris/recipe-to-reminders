@@ -8,12 +8,14 @@ TF_DIR := terraform
 
 build:
 	GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o $(BINARY) ./cmd/lambda/
+	rm -f $(ZIP)
 	zip $(ZIP) $(BINARY)
 
 layer:
 	cd $(LAYER_DIR) && bash build.sh
 
 deploy: build
+	@test -f $(LAYER_ZIP) || (echo "ERROR: $(LAYER_ZIP) not found. Run 'make layer' first." && exit 1)
 	cd $(TF_DIR) && terraform init && terraform apply
 
 destroy:

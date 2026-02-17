@@ -34,3 +34,9 @@ variable "lambda_reserved_concurrency" {
   type        = number
   default     = 10
 }
+
+variable "lambda_web_adapter_version" {
+  description = "Version of the Lambda Web Adapter layer. Find latest at https://github.com/awslabs/aws-lambda-web-adapter"
+  type        = number
+  default     = 25
+}

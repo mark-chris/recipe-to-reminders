@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "recipes" {
-  bucket = "${var.project_name}-recipes"
+  bucket = "${var.project_name}-recipes-${data.aws_caller_identity.current.account_id}"
 }
 
 resource "aws_s3_bucket_versioning" "recipes" {
@@ -43,7 +43,8 @@ resource "aws_s3_bucket_public_access_block" "recipes" {
 }
 
 resource "aws_s3_bucket_policy" "recipes_https_only" {
-  bucket = aws_s3_bucket.recipes.id
+  bucket     = aws_s3_bucket.recipes.id
+  depends_on = [aws_s3_bucket_public_access_block.recipes]
 
   policy = jsonencode({
     Version = "2012-10-17"

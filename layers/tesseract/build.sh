@@ -50,7 +50,7 @@ mkdir build && cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=/opt -DBUILD_SHARED_LIBS=OFF \
   -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
   -DLeptonica_DIR=/opt/lib64/cmake/leptonica \
-  -DBUILD_TRAINING_TOOLS=OFF -DDISABLED_LEGACY_ENGINE=ON
+  -DBUILD_TRAINING_TOOLS=OFF -DDISABLE_LEGACY_ENGINE=ON
 make -j\$(nproc)
 make install
 
@@ -66,6 +66,7 @@ echo '==> Tesseract built successfully'
 # Copy artifacts out
 echo "==> Extracting layer artifacts..."
 STAGING=$(mktemp -d)
+trap 'rm -rf "${STAGING}"; docker rm -f "${CONTAINER_NAME}" 2>/dev/null || true' EXIT
 docker cp "${CONTAINER_NAME}:/opt/bin/tesseract" "${STAGING}/tesseract"
 mkdir -p "${STAGING}/share/tessdata"
 docker cp "${CONTAINER_NAME}:/opt/share/tessdata/eng.traineddata" "${STAGING}/share/tessdata/eng.traineddata"
@@ -87,9 +88,6 @@ mkdir -p bin
 mv tesseract bin/
 zip -r "${OUTPUT_ZIP}" bin/ share/ lib/
 
-# Cleanup
-docker rm -f "${CONTAINER_NAME}" 2>/dev/null || true
-rm -rf "${STAGING}"
-
 SIZE=$(du -h "${OUTPUT_ZIP}" | cut -f1)
 echo "==> Layer zip created: ${OUTPUT_ZIP} (${SIZE})"
+# Cleanup handled by EXIT trap
