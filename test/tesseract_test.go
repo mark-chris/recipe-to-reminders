@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"os/exec"
 	"testing"
 
 	"recipe-to-reminders/internal/parser"
@@ -53,6 +54,26 @@ func TestNewTesseractEngine_InvalidLang(t *testing.T) {
 			t.Errorf("lang %q should be rejected", lang)
 		}
 	}
+}
+
+func TestTesseractEngine_Integration(t *testing.T) {
+	if _, err := exec.LookPath("tesseract"); err != nil {
+		t.Skip("tesseract not installed, skipping integration test")
+	}
+
+	engine, err := parser.NewTesseractEngine("6", "eng")
+	if err != nil {
+		t.Fatalf("failed to create engine: %v", err)
+	}
+
+	// Create a simple white image — Tesseract should return empty/whitespace
+	img := createTestPNG(t, 200, 200)
+	text, conf, err := engine.Run(context.Background(), img)
+	if err != nil {
+		t.Fatalf("tesseract failed: %v", err)
+	}
+
+	t.Logf("OCR text: %q, confidence: %.2f", text, conf)
 }
 
 // MockOCREngine for use by other tests
