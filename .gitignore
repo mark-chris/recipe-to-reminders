@@ -1,6 +1,10 @@
 # Build output
 /lambda
 /bootstrap
+bootstrap.zip
+
+# Lambda layers
+layers/tesseract/tesseract-layer.zip
 
 # Test artifacts
 coverage.out
@@ -16,6 +20,7 @@ terraform.tfvars
 terraform.tfstate
 terraform.tfstate.backup
 .terraform/
+.terraform.lock.hcl
 
 # OS
 .DS_Store
