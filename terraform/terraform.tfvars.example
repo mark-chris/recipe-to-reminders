@@ -1,0 +1,5 @@
+# Copy this file to terraform.tfvars and fill in your values.
+# terraform.tfvars is .gitignored — never commit it.
+
+aws_region        = "ca-west-1"
+anthropic_api_key = ""  # Optional: set to enable Claude Vision fallback
