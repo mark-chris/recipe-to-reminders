@@ -184,7 +184,7 @@ func TestExtractHandler_ValidURL(t *testing.T) {
 	}))
 	defer recipeServer.Close()
 
-	h := handler.New(parser.NewFetcher(parser.WithAllowLoopback(true)))
+	h := handler.New(parser.NewFetcher(parser.WithAllowLoopback(true)), nil)
 
 	body, _ := json.Marshal(models.ExtractRequest{URL: recipeServer.URL})
 	req := httptest.NewRequest(http.MethodPost, "/extract", bytes.NewReader(body))
@@ -213,7 +213,7 @@ func TestExtractHandler_ValidURL(t *testing.T) {
 }
 
 func TestExtractHandler_MissingURL(t *testing.T) {
-	h := handler.New(nil)
+	h := handler.New(nil, nil)
 
 	body, _ := json.Marshal(models.ExtractRequest{})
 	req := httptest.NewRequest(http.MethodPost, "/extract", bytes.NewReader(body))
@@ -228,7 +228,7 @@ func TestExtractHandler_MissingURL(t *testing.T) {
 }
 
 func TestExtractHandler_InvalidImageBase64(t *testing.T) {
-	h := handler.New(nil)
+	h := handler.New(nil, nil)
 
 	body, _ := json.Marshal(models.ExtractRequest{ImageBase64: "abc123"})
 	req := httptest.NewRequest(http.MethodPost, "/extract", bytes.NewReader(body))
@@ -249,7 +249,7 @@ func TestExtractHandler_InvalidImageBase64(t *testing.T) {
 }
 
 func TestExtractHandler_WrongMethod(t *testing.T) {
-	h := handler.New(nil)
+	h := handler.New(nil, nil)
 	req := httptest.NewRequest(http.MethodGet, "/extract", nil)
 	rr := httptest.NewRecorder()
 
@@ -265,7 +265,7 @@ func TestExtractHandler_ImageBase64(t *testing.T) {
 		Text:       "2 cups flour\n1 tsp salt\n1 cup sugar\n3 large eggs\n1 cup milk\n",
 		Confidence: 0.90,
 	}
-	h := handler.New(nil,
+	h := handler.New(nil, nil,
 		parser.WithOCREngine(mock),
 		parser.WithConfidenceThreshold(0.5),
 	)
@@ -296,7 +296,7 @@ func TestExtractHandler_ImageBase64(t *testing.T) {
 }
 
 func TestExtractHandler_ImageTooLarge(t *testing.T) {
-	h := handler.New(nil)
+	h := handler.New(nil, nil)
 
 	large := base64.StdEncoding.EncodeToString(make([]byte, 8*1024*1024))
 	body, _ := json.Marshal(models.ExtractRequest{ImageBase64: large})
@@ -312,7 +312,7 @@ func TestExtractHandler_ImageTooLarge(t *testing.T) {
 }
 
 func TestExtractHandler_BothURLAndImage(t *testing.T) {
-	h := handler.New(nil)
+	h := handler.New(nil, nil)
 
 	body, _ := json.Marshal(models.ExtractRequest{URL: "https://example.com", ImageBase64: "abc"})
 	req := httptest.NewRequest(http.MethodPost, "/extract", bytes.NewReader(body))

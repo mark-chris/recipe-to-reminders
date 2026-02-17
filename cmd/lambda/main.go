@@ -53,7 +53,7 @@ func main() {
 		opts = append(opts, parser.WithImageExtractor(claude))
 	}
 
-	h := handler.New(fetcher, opts...)
+	h := handler.New(fetcher, nil, opts...)
 
 	addr := ":8080"
 	if port := os.Getenv("PORT"); port != "" {
